@@ -1,0 +1,38 @@
+{
+  "name": "@workspace/discord-bot",
+  "version": "1.0.0",
+  "description": "Production-grade Discord Emoji ZIP Uploader Bot with Components V2",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "deploy": "tsx scripts/deploy-commands.ts",
+    "deploy:global": "tsx scripts/deploy-commands.ts --global"
+  },
+  "dependencies": {
+    "discord.js": "^14.19.3",
+    "unzipper": "^0.12.3",
+    "p-limit": "^6.1.0",
+    "p-retry": "^6.2.1",
+    "zod": "catalog:",
+    "dotenv": "^16.4.7",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0",
+    "chalk": "^5.4.1",
+    "ora": "^8.2.0",
+    "cli-progress": "^3.12.0",
+    "pretty-error": "^4.0.0",
+    "ms": "^2.1.3",
+    "file-type": "^19.6.0",
+    "image-size": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/unzipper": "^0.10.10",
+    "@types/cli-progress": "^3.11.6",
+    "@types/ms": "^0.7.34",
+    "tsx": "catalog:",
+    "typescript": "~5.9.3"
+  }
+}
