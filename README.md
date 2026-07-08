@@ -87,16 +87,16 @@ Flags:                     auto_rename animated_first
 
 ```mermaid
 flowchart TB
-    User[Discord User] --> Slash[/emoji-upload]
-    Slash --> Router[interactionCreate Router]
-    Router --> Dash[Dashboard / Settings / Help Panels]
-    Router --> Engine[Upload Engine]
-    Engine --> Download[Stream ZIP from CDN]
-    Download --> Validate[Validate + Extract]
-    Validate --> Queue[Concurrency Queue p-limit]
-    Queue --> Retry[p-retry + Retry-After]
-    Retry --> Discord[guild.emojis.create]
-    Discord --> Report[Live Progress Panel]
+    User["Discord User"] --> Slash["/emoji-upload"]
+    Slash --> Router["interactionCreate Router"]
+    Router --> Dash["Dashboard / Settings / Help Panels"]
+    Router --> Engine["Upload Engine"]
+    Engine --> Download["Stream ZIP from CDN"]
+    Download --> Validate["Validate + Extract"]
+    Validate --> Queue["Concurrency Queue (p-limit)"]
+    Queue --> Retry["p-retry + Retry-After"]
+    Retry --> Discord["guild.emojis.create"]
+    Discord --> Report["Live Progress Panel"]
 ```
 
 ### Current Mode
