@@ -14,6 +14,7 @@
 import { createWriteStream } from 'fs';
 import { mkdir, rm, unlink } from 'fs/promises';
 import path from 'path';
+import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import { setTimeout as sleep } from 'timers/promises';
 import type { Guild, ChatInputCommandInteraction, ButtonInteraction } from 'discord.js';
@@ -37,13 +38,24 @@ import { getConfig } from '../config/index.js';
 /**
  * Stream-download a ZIP from a Discord CDN URL to a temp file.
  */
+const DOWNLOAD_TIMEOUT_MS = 30_000;
+
 async function downloadZip(url: string, destPath: string): Promise<void> {
   const logger = getLogger();
   logger.info(`Downloading ZIP: ${url}`);
 
   await mkdir(path.dirname(destPath), { recursive: true });
 
-  const response = await fetch(url);
+  let response: Response;
+  try {
+    response = await fetch(url, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) });
+  } catch (err) {
+    if (err instanceof Error && err.name === 'TimeoutError') {
+      throw new Error(`ZIP download timed out after ${DOWNLOAD_TIMEOUT_MS / 1000}s`);
+    }
+    throw err;
+  }
+
   if (!response.ok) {
     throw new Error(`Failed to download ZIP: HTTP ${response.status}`);
   }
@@ -51,9 +63,17 @@ async function downloadZip(url: string, destPath: string): Promise<void> {
     throw new Error('No response body for ZIP download');
   }
 
+  logger.info(`ZIP response received, streaming to disk`, { destPath });
+
+  // Wrap the WHATWG ReadableStream in a Node Readable explicitly rather than
+  // relying on an unsafe cast to AsyncIterable — the cast previously used
+  // could silently fail to iterate on some runtimes, hanging forever with
+  // no error and no further log output.
+  const nodeStream = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]);
   const writer = createWriteStream(destPath);
-  await pipeline(response.body as unknown as AsyncIterable<Uint8Array>, writer);
-  logger.debug(`ZIP downloaded to ${destPath}`);
+
+  await pipeline(nodeStream, writer);
+  logger.info(`ZIP downloaded to ${destPath}`);
 }
 
 // ─── Progress loop ────────────────────────────────────────────────────────────
