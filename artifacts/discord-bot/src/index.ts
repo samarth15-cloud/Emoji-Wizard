@@ -62,6 +62,25 @@ async function main(): Promise<void> {
   try {
     spinner.text = 'Connecting to Discord gateway…';
     await client.login(config.token);
+
+    // Cross-check that DISCORD_TOKEN and DISCORD_CLIENT_ID belong to the same
+    // Discord application. A valid token for the *wrong* app logs in fine but
+    // causes confusing failures later (slash commands never appear, etc.).
+    const actualAppId = client.application?.id;
+    if (actualAppId && actualAppId !== config.clientId) {
+      spinner.fail('Configuration mismatch');
+      logger.error('DISCORD_TOKEN and DISCORD_CLIENT_ID belong to different Discord applications', {
+        configuredClientId: config.clientId,
+        actualClientId:     actualAppId,
+      });
+      console.error(
+        `❌  DISCORD_CLIENT_ID (${config.clientId}) does not match the application the token belongs to (${actualAppId}).\n` +
+        `    Update DISCORD_CLIENT_ID to ${actualAppId}, or use a token from that application instead.`
+      );
+      await client.destroy();
+      process.exit(1);
+    }
+
     spinner.succeed('Bot is online!');
   } catch (err) {
     spinner.fail('Failed to connect to Discord');

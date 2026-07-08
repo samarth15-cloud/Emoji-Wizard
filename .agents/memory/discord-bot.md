@@ -28,3 +28,5 @@ description: Architecture decisions, gotchas, and non-obvious rules for the Disc
 3. Start the "Discord Bot" workflow (or `run dev`)
 
 **Why:** The bot exits at startup if config is missing (Zod env schema validation in `src/config/schema.ts`).
+
+**Token/ClientID mismatch**: a valid `DISCORD_TOKEN` from the *wrong* Discord application logs in successfully (Discord doesn't reject it) but causes confusing downstream failures (slash commands never appear, wrong bot identity). Zod schema validation cannot catch this since it only checks format, not cross-field consistency. Fix: after `client.login()`, compare `client.application.id` to configured `clientId` and fail fast with a clear error naming both IDs. Diagnostic trick: the first `.`-delimited segment of a bot token is the base64-encoded application/bot user snowflake ID — decode it to check which app a token belongs to before assuming the token itself is invalid.
