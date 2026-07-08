@@ -1,19 +1,38 @@
 {
-  "name": "workspace",
-  "version": "0.0.0",
-  "license": "MIT",
+  "name": "emoji-wizard-discord-bot",
+  "version": "1.0.0",
+  "description": "Production-grade Discord Emoji ZIP Uploader Bot with Components V2",
+  "type": "module",
   "scripts": {
-    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
-    "build": "pnpm run typecheck && pnpm -r --if-present run build",
-    "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "deploy": "tsx scripts/deploy-commands.ts",
+    "deploy:global": "tsx scripts/deploy-commands.ts --global"
   },
-  "private": true,
   "dependencies": {
-    "@replit/connectors-sdk": "^0.4.1"
+    "discord.js": "^14.19.3",
+    "unzipper": "^0.12.3",
+    "p-limit": "^6.1.0",
+    "p-retry": "^6.2.1",
+    "zod": "^3.25.76",
+    "dotenv": "^16.4.7",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0",
+    "chalk": "^5.4.1",
+    "ora": "^8.2.0",
+    "cli-progress": "^3.12.0",
+    "pretty-error": "^4.0.0",
+    "ms": "^2.1.3",
+    "file-type": "^19.6.0",
+    "image-size": "^1.2.0"
   },
   "devDependencies": {
-    "prettier": "^3.9.4",
+    "@types/node": "^25.3.3",
+    "@types/unzipper": "^0.10.10",
+    "@types/cli-progress": "^3.11.6",
+    "@types/ms": "^0.7.34",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.3"
   }
 }

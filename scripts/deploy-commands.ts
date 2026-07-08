@@ -4,8 +4,8 @@
  * Registers /emoji-upload with Discord's API.
  *
  * Usage:
- *   pnpm --filter @workspace/discord-bot run deploy          # Guild-scoped (instant)
- *   pnpm --filter @workspace/discord-bot run deploy:global   # Global (up to 1h propagation)
+ *   pnpm run deploy          # Guild-scoped (instant)
+ *   pnpm run deploy:global   # Global (up to 1h propagation)
  *
  * Guild-scoped is strongly recommended during development.
  * Set DISCORD_GUILD_ID in .env for guild-scoped registration.

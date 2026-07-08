@@ -1,1 +1,0 @@
-- [Discord Bot architecture](discord-bot.md) — production emoji ZIP uploader bot; key patterns and gotchas across the codebase
