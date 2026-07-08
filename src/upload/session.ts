@@ -91,17 +91,8 @@ export async function stageExtract(
     status:     'processing',
   });
 
-  // Check emoji slots — fail fast before any uploads begin
-  const slots          = await getEmojiSlots(guild);
-  const neededStatic   = result.emojis.filter(e => !e.isAnimated).length;
-  const neededAnimated = result.emojis.filter(e => e.isAnimated).length;
-
-  if (slots.staticAvailable < neededStatic) {
-    throw new NoSlotsError(neededStatic);
-  }
-  if (slots.animatedAvailable < neededAnimated) {
-    throw new NoSlotsError(neededAnimated);
-  }
+  // Fetch emoji slot availability so we can cap the batch to what fits
+  const slots = await getEmojiSlots(guild);
 
   // Resolve unique names against existing server emojis
   const existingNames = guild.emojis.cache.map(e => e.name ?? '').filter(Boolean);
@@ -140,15 +131,52 @@ export async function stageExtract(
     processed.push(emoji);
   }
 
+  // Cap to available server slots — upload what fits, skip the overflow
+  // instead of aborting the entire batch when the server is near capacity.
+  const finalEmojis: EmojiFile[] = [];
+  const overflow: string[] = [];
+  let staticKept = 0;
+  let animatedKept = 0;
+
+  for (const e of processed) {
+    if (e.isAnimated) {
+      if (animatedKept < slots.animatedAvailable) {
+        finalEmojis.push(e);
+        animatedKept++;
+      } else {
+        overflow.push(e.name);
+      }
+    } else {
+      if (staticKept < slots.staticAvailable) {
+        finalEmojis.push(e);
+        staticKept++;
+      } else {
+        overflow.push(e.name);
+      }
+    }
+  }
+
+  if (processed.length > 0 && finalEmojis.length === 0) {
+    throw new NoSlotsError(processed.length);
+  }
+
+  if (overflow.length > 0) {
+    logger.warn(`Skipping ${overflow.length} emoji(s): not enough server slots`, {
+      sessionId,
+      overflow: overflow.slice(0, 20),
+    });
+  }
+
   // Update session with prepared emoji list
   sessionStore.update(sessionId, {
-    emojis: processed,
+    emojis: finalEmojis,
     stats: {
       ...session.stats,
-      total: processed.length,
+      total: finalEmojis.length,
     },
   });
 
-  logger.info(`Prepared ${processed.length} emojis for upload`, { sessionId });
-  return processed;
+  logger.info(`Prepared ${finalEmojis.length} emojis for upload` +
+    (overflow.length ? ` (${overflow.length} skipped — no slots)` : ''), { sessionId });
+  return finalEmojis;
 }

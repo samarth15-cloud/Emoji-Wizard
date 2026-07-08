@@ -7,7 +7,6 @@
 
 import {
   ContainerBuilder,
-  SectionBuilder,
   TextDisplayBuilder,
   SeparatorBuilder,
   ActionRowBuilder,
@@ -95,18 +94,15 @@ export function buildCompletionPanel(session: UploadSession): ContainerBuilder {
   );
 
   // Results summary
-  container.addSectionComponents(
-    new SectionBuilder()
-      .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-          `### ${ICONS.STATS} Upload Results\n` +
-          `${ICONS.SUCCESS} **Completed**         ${stats.completed}\n` +
-          `${ICONS.ERROR}  **Failed**            ${stats.failed}\n` +
-          `${ICONS.SKIP}  **Skipped**           ${stats.skipped}\n` +
-          `${ICONS.PENCIL ?? '✏️'}  **Renamed (dedup)**   ${stats.duplicatesRenamed}\n` +
-          `${ICONS.RETRY}  **Total Retries**     ${stats.retried}`,
-        ),
-      ),
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      `### ${ICONS.STATS} Upload Results\n` +
+      `${ICONS.SUCCESS} **Completed**         ${stats.completed}\n` +
+      `${ICONS.ERROR}  **Failed**            ${stats.failed}\n` +
+      `${ICONS.SKIP}  **Skipped**           ${stats.skipped}\n` +
+      `${ICONS.PENCIL ?? '✏️'}  **Renamed (dedup)**   ${stats.duplicatesRenamed}\n` +
+      `${ICONS.RETRY}  **Total Retries**     ${stats.retried}`,
+    ),
   );
 
   container.addSeparatorComponents(

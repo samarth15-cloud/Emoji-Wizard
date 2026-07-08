@@ -152,9 +152,11 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
         try {
           await interaction.editReply({ components });
         } catch (err) {
+          const e = err as { message?: string; errors?: unknown; rawError?: unknown };
           logger.warn(`Failed to edit progress reply`, {
             sessionId: session!.id,
-            error: err instanceof Error ? err.message : String(err),
+            error: e.message ?? String(err),
+            discordErrors: e.errors ?? e.rawError,
           });
         }
       },

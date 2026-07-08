@@ -7,7 +7,6 @@
 
 import {
   ContainerBuilder,
-  SectionBuilder,
   TextDisplayBuilder,
   SeparatorBuilder,
   ActionRowBuilder,
@@ -73,17 +72,14 @@ export function buildProgressPanel(
     .setAccentColor(snap.percentage === 100 ? COLORS.SUCCESS : COLORS.PRIMARY);
 
   // Header
-  container.addSectionComponents(
-    new SectionBuilder()
-      .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-          `## ${ICONS.UPLOAD} Uploading Emojis${isDryRun}\n` +
-          `**${session.zipFilename ?? 'ZIP file'}**  •  ${snap.total} emojis`,
-        ),
-        new TextDisplayBuilder().setContent(
-          formatProgress(snap.done, snap.total),
-        ),
-      ),
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      `## ${ICONS.UPLOAD} Uploading Emojis${isDryRun}\n` +
+      `**${session.zipFilename ?? 'ZIP file'}**  •  ${snap.total} emojis`,
+    ),
+    new TextDisplayBuilder().setContent(
+      formatProgress(snap.done, snap.total),
+    ),
   );
 
   container.addSeparatorComponents(
