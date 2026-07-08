@@ -85,7 +85,7 @@ handlers.set(CUSTOM_IDS.ADVANCED_OPEN, async (interaction) => {
   if (!settings) {
     await interaction.reply({
       components: [buildErrorPanel('No Active Session', 'Run /emoji-upload first.', undefined)],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
     return;
   }
@@ -137,7 +137,7 @@ handlers.set(CUSTOM_IDS.UPLOAD_START, async (interaction) => {
   } catch (err) {
     await interaction.reply({
       components: [buildErrorPanel('Permission Denied', err instanceof Error ? err.message : String(err), undefined)],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
     return;
   }
@@ -151,7 +151,7 @@ handlers.set(CUSTOM_IDS.UPLOAD_START, async (interaction) => {
         'You already have an active upload session running. Please wait for it to complete or cancel it.',
         existing,
       )],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
     return;
   }
@@ -199,7 +199,7 @@ handlers.set(CUSTOM_IDS.UPLOAD_START, async (interaction) => {
   if (!interaction.replied && !interaction.deferred) {
     await interaction.reply({
       components: [waitContainer],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
   } else {
     await interaction.editReply({ components: [waitContainer] });
@@ -376,7 +376,7 @@ export async function handleButton(interaction: ButtonInteraction): Promise<void
     if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
         components: [buildErrorPanel('Unknown Action', `No handler found for button: \`${interaction.customId}\``, undefined)],
-        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+        flags: MessageFlags.IsComponentsV2,
       });
     }
     return;
@@ -402,7 +402,7 @@ export async function handleButton(interaction: ButtonInteraction): Promise<void
       } else {
         await interaction.reply({
           components: [errorPanel],
-          flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+          flags: MessageFlags.IsComponentsV2,
         });
       }
     } catch {

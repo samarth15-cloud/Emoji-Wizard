@@ -20,20 +20,6 @@ import { btnAbort } from '../components/buttons.js';
 import { computeProgress } from '../utils/progress.js';
 import { formatProgress, formatDuration, formatBytes } from '../utils/format.js';
 
-// ─── State → colour map ───────────────────────────────────────────────────────
-
-function stateIcon(state: QueueItem['state']): string {
-  switch (state) {
-    case 'pending':   return '⬜';
-    case 'uploading': return '🔵';
-    case 'retrying':  return '🟡';
-    case 'completed': return '🟢';
-    case 'failed':    return '🔴';
-    case 'skipped':   return '⚪';
-    case 'cancelled': return '⛔';
-  }
-}
-
 // ─── Progress panel ───────────────────────────────────────────────────────────
 
 /**
@@ -52,17 +38,6 @@ export function buildProgressPanel(
   const isDryRun = s.dryRun
     ? ` ${ICONS.DRY_RUN} **DRY RUN**`
     : '';
-
-  // ── Recent items (last 8 or so)
-  const recentItems = items
-    .filter(i => i.state !== 'pending')
-    .slice(-8)
-    .reverse();
-
-  const recentLines = recentItems.map(item =>
-    `${stateIcon(item.state)} \`${item.file.name}\`` +
-    (item.error ? `  ↳ *${item.error.slice(0, 50)}*` : ''),
-  );
 
   // ── Queue summary strip
   const pendingCount   = snap.pending;
@@ -113,20 +88,6 @@ export function buildProgressPanel(
     ),
   );
 
-  // Recent items list
-  if (recentLines.length > 0) {
-    container.addSeparatorComponents(
-      new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small),
-    );
-
-    container.addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `### ${ICONS.QUEUE} Recent Activity\n` +
-        recentLines.join('\n'),
-      ),
-    );
-  }
-
   container.addSeparatorComponents(
     new SeparatorBuilder().setDivider(true).setSpacing(SeparatorSpacingSize.Small),
   );
@@ -135,15 +96,6 @@ export function buildProgressPanel(
   container.addActionRowComponents(
     new ActionRowBuilder<ButtonBuilder>().addComponents(btnAbort()),
   );
-
-  // Retry info
-  if (session.stats.retried > 0) {
-    container.addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `-# ${ICONS.RETRY} ${session.stats.retried} retry attempt(s) so far`,
-      ),
-    );
-  }
 
   return container;
 }

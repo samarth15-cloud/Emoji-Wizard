@@ -21,7 +21,7 @@ export async function handleSelect(interaction: StringSelectMenuInteraction): Pr
   if (!session) {
     await interaction.reply({
       components: [buildErrorPanel('No Session', 'No active upload session found. Run /emoji-upload first.', undefined)],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
     return;
   }
@@ -59,7 +59,7 @@ export async function handleSelect(interaction: StringSelectMenuInteraction): Pr
   if (!updated) {
     await interaction.reply({
       components: [buildErrorPanel('Update Failed', 'Could not update session settings.', session)],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
     return;
   }

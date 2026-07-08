@@ -34,7 +34,6 @@ const event: BotEvent = {
         logger.warn(`Unknown command: ${interaction.commandName}`);
         await interaction.reply({
           content: `Unknown command: \`/${interaction.commandName}\``,
-          flags:   MessageFlags.Ephemeral,
         });
         return;
       }
@@ -61,7 +60,7 @@ const event: BotEvent = {
           } else {
             await interaction.reply({
               components: [errorPanel],
-              flags:      MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+              flags:      MessageFlags.IsComponentsV2,
             });
           }
         } catch {

@@ -24,7 +24,7 @@ export async function handleModal(interaction: ModalSubmitInteraction): Promise<
   if (!interaction.replied && !interaction.deferred) {
     await interaction.reply({
       components: [buildErrorPanel('Unknown Modal', `No handler for modal: ${interaction.customId}`, undefined)],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
   }
 }
@@ -38,7 +38,7 @@ async function handleSettingsModal(interaction: ModalSubmitInteraction): Promise
   if (!session) {
     await interaction.reply({
       components: [buildErrorPanel('No Session', 'No active upload session found.', undefined)],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
     return;
   }
@@ -69,7 +69,7 @@ async function handleSettingsModal(interaction: ModalSubmitInteraction): Promise
 
     await interaction.reply({
       components: [buildSettingsPanel(updated.settings)],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
 
   } catch (err) {
@@ -82,7 +82,7 @@ async function handleSettingsModal(interaction: ModalSubmitInteraction): Promise
         err instanceof Error ? err.message : 'Failed to update settings.',
         session,
       )],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
   }
 }

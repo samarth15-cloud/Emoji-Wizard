@@ -58,7 +58,7 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
         err instanceof Error ? err.message : String(err),
         undefined,
       )],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
     return;
   }
@@ -78,7 +78,7 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
         err instanceof Error ? err.message : 'Failed to retrieve emoji slot information.',
         undefined,
       )],
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      flags: MessageFlags.IsComponentsV2,
     });
     return;
   }
@@ -102,7 +102,7 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
           err instanceof Error ? err.message : 'Could not create upload session.',
           undefined,
         )],
-        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+        flags: MessageFlags.IsComponentsV2,
       });
       return;
     }
@@ -121,7 +121,7 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
 
   await interaction.reply({
     components: [dashboard],
-    flags:      MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+    flags:      MessageFlags.IsComponentsV2,
   });
 
   // ── If ZIP was attached, start upload immediately ─────────────────────────

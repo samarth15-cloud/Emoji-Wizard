@@ -16,12 +16,7 @@ import {
 import type { UploadSession } from '../types/index.js';
 import { COLORS, ICONS } from '../constants/index.js';
 import { btnDone, btnNewUpload, btnViewStats } from '../components/buttons.js';
-import {
-  formatDuration,
-  formatBytes,
-  buildProgressBar,
-  formatSpeed,
-} from '../utils/format.js';
+import { buildProgressBar } from '../utils/format.js';
 
 // ─── Completion panel ─────────────────────────────────────────────────────────
 
@@ -64,18 +59,6 @@ export function buildCompletionPanel(session: UploadSession): ContainerBuilder {
   const successPct = total > 0 ? (stats.completed / total) * 100 : 0;
   const bar        = buildProgressBar(successPct);
 
-  // Timing
-  const elapsed = formatDuration(stats.elapsedMs);
-  const speed   = stats.averageUploadMs ? formatSpeed(stats.averageUploadMs) : '—';
-
-  // Duration range
-  const startLabel = session.startedAt
-    ? session.startedAt.toLocaleTimeString('en-US', { hour12: false })
-    : '—';
-  const endLabel   = session.completedAt
-    ? session.completedAt.toLocaleTimeString('en-US', { hour12: false })
-    : '—';
-
   const container = new ContainerBuilder()
     .setAccentColor(accentColor);
 
@@ -107,18 +90,6 @@ export function buildCompletionPanel(session: UploadSession): ContainerBuilder {
 
   container.addSeparatorComponents(
     new SeparatorBuilder().setDivider(false).setSpacing(SeparatorSpacingSize.Small),
-  );
-
-  // Performance stats
-  container.addTextDisplayComponents(
-    new TextDisplayBuilder().setContent(
-      `### ${ICONS.TIMER} Performance\n` +
-      `${ICONS.CLOCK}  **Start → End**      ${startLabel} → ${endLabel}\n` +
-      `${ICONS.TIMER}  **Total Time**       ${elapsed}\n` +
-      `${ICONS.SPEED}  **Avg Speed**        ${speed}\n` +
-      `${ICONS.MEMORY}  **Data Processed**   ${formatBytes(stats.bytesProcessed)}\n` +
-      `${ICONS.SPEED}  **Concurrency**      ${s.concurrency} parallel`,
-    ),
   );
 
   // Failed emoji list (show up to 10)
