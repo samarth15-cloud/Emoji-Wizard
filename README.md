@@ -1,263 +1,360 @@
-# 🤖 Discord Emoji ZIP Uploader Bot
+# Emoji Wizard
 
-A **production-grade** Discord.js v14 bot that uploads emoji batches from ZIP archives to Discord servers. Features Components V2 UI, a professional upload queue, exponential backoff retry logic, live progress tracking, and a fully interactive settings panel.
+<div align="center">
+
+**Production-grade Discord emoji mass-uploader with a Components V2 slash-command control plane.**
+
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![Discord.js](https://img.shields.io/badge/discord.js-14-5865F2?style=for-the-badge&logo=discord&logoColor=white)
+![Components V2](https://img.shields.io/badge/UI-Components%20V2-7C3AED?style=for-the-badge)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+
+`/emoji-upload`
+
+</div>
 
 ---
 
-## Features
+## Overview
 
-| Feature | Description |
+Emoji Wizard is a Discord bot that turns a folder of emoji images into live server emojis with a single command. Drop a `.zip` of images into the slash command (or upload it after), and the bot validates, extracts, and uploads them through a live progress dashboard — fitting the upload to your server's available emoji slots.
+
+| Layer | Purpose |
 |---|---|
-| **Components V2 UI** | Premium dashboard using ContainerBuilder, SectionBuilder, TextDisplayBuilder |
-| **ZIP extraction** | Streaming extraction — never loads entire archive into RAM |
-| **Emoji normalisation** | Auto-converts filenames to valid Discord emoji names |
-| **Upload queue** | Configurable concurrency (1–10) with p-limit |
-| **Retry engine** | Exponential backoff with Discord Retry-After respect |
-| **Live progress** | Continuously-edited progress panel (no spam) |
-| **Duplicate handling** | Skip / auto-rename / overwrite |
-| **Dry run mode** | Simulate uploads without calling the Discord API |
-| **Settings panel** | Interactive dropdowns and modal for all options |
-| **ZIP validation** | Zip-slip prevention, size checks, format validation |
-| **Log rotation** | Winston + daily-rotate-file (JSON + pretty console) |
-| **Session management** | TTL-based GC, max 3 concurrent sessions per guild |
+| **Slash Controller** | A Discord bot that exposes `/emoji-upload`, Components V2 panels, settings modals, and confirmations. |
+| **Upload Engine** | Streams the ZIP from Discord's CDN, validates/extracts it, and runs a concurrency-limited upload queue. |
+| **Emoji Pipeline** | Per-file validation, name normalisation, de-duplication, and Discord rate-limit aware retries. |
+
+The current release is a single-process bot. The architecture is already split into builders, handlers, and an upload engine so future features (multi-server, scheduled syncs) slot in cleanly.
 
 ---
 
-## Quick Start
+## Highlights
 
-### 1. Clone and install
-
-```bash
-git clone <your-repo>
-cd discord-bot
-pnpm install
-```
-
-### 2. Configure environment
-
-```bash
-cp .env.example .env
-# Edit .env and fill in DISCORD_TOKEN + DISCORD_CLIENT_ID
-```
-
-### 3. Create your bot
-
-1. Go to [discord.com/developers/applications](https://discord.com/developers/applications)
-2. **New Application** → give it a name
-3. **Bot** → **Reset Token** → copy the token into `DISCORD_TOKEN`
-4. Copy the **Application ID** into `DISCORD_CLIENT_ID`
-5. Enable **Message Content Intent** *(not strictly required but improves file collection)*
-6. Under **OAuth2 → URL Generator**: select scopes `bot` + `applications.commands`,
-   bot permissions `Manage Expressions` + `Read Messages/View Channels` + `Send Messages`
-7. Open the generated URL and add the bot to your server
-
-### 4. Deploy slash commands
-
-```bash
-# Development: instant guild-scoped (set DISCORD_GUILD_ID in .env)
-pnpm --filter @workspace/discord-bot run deploy
-
-# Production: global registration (up to 1h propagation)
-pnpm --filter @workspace/discord-bot run deploy:global
-```
-
-### 5. Start the bot
-
-```bash
-# Development (hot reload)
-pnpm --filter @workspace/discord-bot run dev
-
-# Production
-pnpm --filter @workspace/discord-bot run start
-```
+- **One command, zero friction:** `/emoji-upload` with the ZIP attached starts the upload immediately; without it, a dashboard opens so you can upload after.
+- **Components V2 UI:** Dashboard, live progress, completion, settings, and error panels all render with containers, separators, buttons, and modals.
+- **Streaming, not memory-hungry:** The ZIP is downloaded and extracted with Node streams, so huge archives never load fully into RAM.
+- **Fit-to-slots uploading:** When the server is near capacity, Emoji Wizard uploads what fits and skips the overflow instead of aborting the whole batch.
+- **Resumable-safe queue:** `p-limit` concurrency + `p-retry` with Discord `Retry-After` handling keeps uploads fast without tripping rate limits.
+- **Settings that stick:** Concurrency, retries, progress interval, and behaviour flags are configurable per session via a modal or the settings panel.
+- **Dry-run mode:** Simulate the full pipeline (validate → extract → queue) without creating a single emoji.
+- **Defensive validation:** ZIP-slip protection, size/type checks, and per-file validation happen before any upload begins.
 
 ---
 
-## Usage
+## Command Center Preview
 
-### `/emoji-upload`
-
-Open the interactive dashboard:
-
-```
+```text
 /emoji-upload
+
+🤖 Emoji ZIP Uploader
+My Server • Level 0
+
+🟢 Ready — No active upload
+
+### 📦 Emoji Slots
+📦 Static   🟢 ████████░░ 12/50 (38 free)
+🎞️ Animated 🟢 ████████░░ 8/50 (42 free)
+
+[Upload ZIP] [Settings] [Advanced] [Help]
 ```
 
-Upload a ZIP immediately:
+```text
+/emoji-upload  (with attached zip)
 
+## 📤 Uploading Emojis
+**PokeUnited.zip** • 65 emojis
+
+████████████░░ 82%  (54/65)
+✅ Done 54   ❌ Failed 0   ⚪ Skipped 0   ⬜ Pending 11   🔵 Uploading 2 / 2
+
+[Abort]
 ```
-/emoji-upload zip:<file.zip>
+
+```text
+Advanced (settings modal)
+
+⚙️ Upload Settings
+Concurrency (1–10):        2
+Max Retries (0–10):        3
+Progress Interval (ms):    2000
+Flags:                     auto_rename animated_first
 ```
-
-Dry run (no real uploads):
-
-```
-/emoji-upload dry_run:True
-```
-
-### Dashboard Buttons
-
-| Button | Action |
-|---|---|
-| 📤 Upload ZIP | Waits for you to send a ZIP in the channel |
-| ⚙️ Settings | Opens the settings panel with dropdowns |
-| 🔧 Advanced | Opens the settings modal for concurrency / retries |
-| ❓ Help | Full documentation panel |
-| 🔄 Refresh | Reloads dashboard with current server stats |
-| 🚫 Cancel | Cancels the active upload session |
-
----
-
-## Configuration
-
-All configuration is via environment variables (validated with Zod):
-
-| Variable | Default | Description |
-|---|---|---|
-| `DISCORD_TOKEN` | — | **Required** Bot token |
-| `DISCORD_CLIENT_ID` | — | **Required** Application ID |
-| `DISCORD_GUILD_ID` | — | Optional; required for guild-scoped command deploy |
-| `MAX_ZIP_SIZE_MB` | `100` | Maximum ZIP file size |
-| `TEMP_DIR` | `./tmp` | Temporary extraction directory |
-| `LOG_LEVEL` | `info` | winston log level |
-| `LOG_DIR` | `./logs` | Log file directory |
-| `DEFAULT_CONCURRENCY` | `2` | Parallel upload count |
-| `DEFAULT_MAX_RETRIES` | `3` | Max retries per emoji |
-| `PROGRESS_INTERVAL_MS` | `2000` | Live panel refresh interval |
 
 ---
 
 ## Architecture
 
-```
-src/
-├── index.ts              Entry point (startup sequence)
-├── bot.ts                Discord client factory + event registration
-│
-├── commands/
-│   ├── index.ts          Command registry (Map for O(1) dispatch)
-│   └── emoji-upload.ts   /emoji-upload slash command
-│
-├── events/
-│   ├── ready.ts          Gateway ready — logs startup banner
-│   ├── interactionCreate.ts  Routes interactions to handlers
-│   └── error.ts          Client errors + process signal handlers
-│
-├── handlers/
-│   ├── button.ts         All button custom ID → action mappings
-│   ├── modal.ts          Settings modal submission
-│   └── select.ts         StringSelectMenu → settings updates
-│
-├── builders/             Components V2 panel constructors
-│   ├── dashboard.ts      Main dashboard (server stats, slots, buttons)
-│   ├── progress.ts       Live upload progress panel
-│   ├── settings.ts       Settings configuration panel
-│   ├── help.ts           Documentation panel
-│   ├── completion.ts     Upload summary / completion panel
-│   └── error-panel.ts    Error display with recovery hints
-│
-├── components/           Reusable Discord component builders
-│   ├── buttons.ts        All ButtonBuilder factory functions
-│   ├── modals.ts         ModalBuilder + input parsers
-│   └── selects.ts        StringSelectMenuBuilder factories
-│
-├── upload/
-│   ├── engine.ts         Full pipeline orchestrator (download → extract → queue)
-│   └── session.ts        Validation + extraction stages
-│
-├── zip/
-│   ├── validator.ts      ZIP pre-validation (security + format checks)
-│   └── extractor.ts      Streaming extraction with zip-slip protection
-│
-├── emoji/
-│   ├── processor.ts      Name normalisation + deduplication
-│   ├── validator.ts      Per-file size/dimension validation
-│   └── uploader.ts       guild.emojis.create() with p-retry
-│
-├── queue/
-│   └── manager.ts        p-limit queue with per-item state tracking
-│
-├── storage/
-│   └── session-store.ts  In-memory session store with TTL GC
-│
-├── utils/
-│   ├── format.ts         Duration, bytes, progress bar, speed formatters
-│   ├── discord.ts        Emoji slots, permission checks, guild helpers
-│   └── progress.ts       Progress snapshot computation
-│
-├── config/
-│   ├── schema.ts         Zod environment schema
-│   └── index.ts          Config loader singleton
-│
-├── logging/
-│   └── logger.ts         Winston logger with daily rotation
-│
-├── types/
-│   └── index.ts          All TypeScript interfaces + custom errors
-│
-└── constants/
-    └── index.ts          Discord limits, CUSTOM_IDs, colours, icons
+```mermaid
+flowchart TB
+    User[Discord User] --> Slash[/emoji-upload]
+    Slash --> Router[interactionCreate Router]
+    Router --> Dash[Dashboard / Settings / Help Panels]
+    Router --> Engine[Upload Engine]
+    Engine --> Download[Stream ZIP from CDN]
+    Download --> Validate[Validate + Extract]
+    Validate --> Queue[Concurrency Queue p-limit]
+    Queue --> Retry[p-retry + Retry-After]
+    Retry --> Discord[guild.emojis.create]
+    Discord --> Report[Live Progress Panel]
 ```
 
----
+### Current Mode
 
-## Security
+```text
+Discord Slash Command -> Upload Engine -> guild.emojis.create
+```
 
-- **Zip-slip mitigation** — every entry path is resolved and checked against the extraction root before writing
-- **Path traversal** — `../` and absolute paths are rejected
-- **macOS/Windows metadata** (`__MACOSX`, `.DS_Store`, `Thumbs.db`) filtered silently
-- **Hidden files** (`.gitignore`, `.env`) ignored in ZIP contents
-- **Maximum ZIP size** enforced before extraction
-- **Maximum file count** enforced to prevent DoS
-- **Permissions** checked per-user and per-bot before any upload attempt
+All panels are public (Components V2) and edited in place as the upload progresses.
 
 ---
 
-## Developer Guide
+## Project Structure
 
-### Adding a new command
-
-1. Create `src/commands/my-command.ts` exporting a `SlashCommand`
-2. Import and add it to `src/commands/index.ts`
-3. Re-run `pnpm deploy`
-
-### Adding a new button
-
-1. Add the custom ID to `CUSTOM_IDS` in `src/constants/index.ts`
-2. Add a factory function in `src/components/buttons.ts`
-3. Register a handler in `src/handlers/button.ts`
-
-### Adding a new panel
-
-1. Create `src/builders/my-panel.ts` returning `ContainerBuilder`
-2. Use `COLORS`, `ICONS`, and the existing component factories
-3. Set `flags: MessageFlags.IsComponentsV2` when sending
+```text
+emoji-wizard/
+├── src/
+│   ├── index.ts                 # Bot entrypoint (login + graceful shutdown)
+│   ├── bot.ts                   # Discord client factory + event registration
+│   ├── commands/
+│   │   ├── index.ts             # Slash command registry
+│   │   └── emoji-upload.ts      # /emoji-upload entrypoint
+│   ├── builders/                # Components V2 panel builders
+│   │   ├── dashboard.ts
+│   │   ├── progress.ts
+│   │   ├── completion.ts
+│   │   ├── settings.ts
+│   │   ├── error-panel.ts
+│   │   └── help.ts
+│   ├── components/              # Buttons, modals, select menus
+│   │   ├── buttons.ts
+│   │   ├── modals.ts
+│   │   └── selects.ts
+│   ├── handlers/                # Interaction routers
+│   │   ├── button.ts
+│   │   ├── select.ts
+│   │   └── modal.ts
+│   ├── upload/                  # Pipeline orchestration
+│   │   ├── engine.ts            # Download + validate + queue driver
+│   │   └── session.ts          # Stage validation/extraction + slot capping
+│   ├── emoji/                   # Per-file logic
+│   │   ├── validator.ts
+│   │   ├── processor.ts
+│   │   └── uploader.ts
+│   ├── zip/                     # Archive handling
+│   │   ├── validator.ts
+│   │   └── extractor.ts
+│   ├── queue/                   # Concurrency manager
+│   │   └── manager.ts
+│   ├── storage/                 # Session store
+│   │   └── session-store.ts
+│   ├── config/                  # Runtime config + schema
+│   │   ├── index.ts
+│   │   └── schema.ts
+│   ├── constants/               # Limits, icons, custom IDs
+│   │   └── index.ts
+│   ├── logging/                 # Winston logger
+│   │   └── logger.ts
+│   ├── utils/                   # Discord + formatting helpers
+│   │   ├── discord.ts
+│   │   ├── format.ts
+│   │   └── progress.ts
+│   ├── events/                  # Discord event handlers
+│   │   ├── ready.ts
+│   │   ├── interactionCreate.ts
+│   │   └── error.ts
+│   └── types/                   # Shared types/errors
+│       └── index.ts
+├── scripts/
+│   └── deploy-commands.ts       # Slash command registration
+├── .env.example
+├── package.json
+├── tsconfig.json
+└── README.md
+```
 
 ---
 
-## Required Bot Permissions
+## Setup
 
-| Permission | Why |
+### 1. Install
+
+```bash
+pnpm install
+```
+
+### 2. Configure
+
+Copy the example env and fill in your bot credentials:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+
+```env
+DISCORD_TOKEN=YOUR_BOT_TOKEN
+DISCORD_CLIENT_ID=YOUR_APPLICATION_ID
+# Optional: register commands to one guild for instant testing
+DISCORD_GUILD_ID=
+```
+
+### 3. Deploy Slash Commands
+
+Register the command globally (can take up to 1 hour to propagate) or to a single guild for instant testing:
+
+```bash
+pnpm run deploy:global      # Global registration
+pnpm run deploy             # Guild-scoped (needs DISCORD_GUILD_ID)
+```
+
+### 4. Start
+
+```bash
+pnpm start                  # Run once
+pnpm dev                    # Auto-restart on file changes (tsx watch)
+```
+
+On startup:
+
+- The bot logs in and prints the online banner.
+- `/emoji-upload` is available wherever the bot is present.
+- The bot needs the **Manage Expressions** permission in the target server.
+
+---
+
+## Configuration
+
+### `.env`
+
+| Key | Type | Description |
+|---|---|---|
+| `DISCORD_TOKEN` | string | Bot token from the Discord Developer Portal. |
+| `DISCORD_CLIENT_ID` | string | Application ID for slash-command registration. |
+| `DISCORD_GUILD_ID` | string | Optional guild for fast command registration. Leave blank for global. |
+| `MAX_ZIP_SIZE_MB` | number | Maximum uploaded ZIP size. Default: `100`. |
+| `TEMP_DIR` | string | Temp directory for ZIP extraction. Default: `./tmp`. |
+| `LOG_LEVEL` | string | `error` \| `warn` \| `info` \| `debug` \| `silly`. Default: `info`. |
+| `LOG_DIR` | string | Directory for rotating logs. Default: `./logs`. |
+| `DEFAULT_CONCURRENCY` | number | Parallel upload concurrency (1–10). Default: `2`. |
+| `DEFAULT_MAX_RETRIES` | number | Retry attempts per emoji (0–10). Default: `3`. |
+| `PROGRESS_INTERVAL_MS` | number | Live progress update interval. Default: `2000`. |
+| `NODE_ENV` | string | `development` or `production`. |
+
+---
+
+## Slash Commands
+
+### Primary
+
+| Command | Description |
 |---|---|
-| `Manage Expressions` | Create and delete emojis |
-| `Read Messages / View Channels` | Receive file attachments from users |
-| `Send Messages` | Send progress ephemeral messages |
+| `/emoji-upload [zip] [dry_run]` | Open the dashboard, or start an upload immediately when a ZIP is attached. |
+
+### Dashboard Actions
+
+| Action | Description |
+|---|---|
+| **Upload ZIP** | Prompts you to send a ZIP in the channel, then begins the upload. |
+| **Settings** | Open the settings panel (concurrency, retries, flags). |
+| **Advanced** | Open the settings modal for precise tuning. |
+| **Help** | Open the help panel. |
+| **Refresh** | Reload the dashboard. |
+| **Cancel** | Cancel and clean up the active session. |
+| **Abort** | Stop an in-progress upload. |
+
+### Settings
+
+| Field | Description |
+|---|---|
+| `Concurrency` | Parallel uploads (1–10). |
+| `Max Retries` | Retry attempts per emoji (0–10). |
+| `Progress Interval` | How often the live panel updates (ms). |
+| `Flags` | `auto_rename`, `skip_dup`, `animated_first`, `dry_run`, `lenient`. |
 
 ---
 
-## Troubleshooting
+## Supported Formats & Limits
 
-**"Missing permissions" error**
-→ Grant `Manage Expressions` in Server Settings → Roles → Bot Role
+Emoji Wizard validates against Discord's real constraints before uploading.
 
-**Commands not appearing**
-→ Re-run `pnpm deploy`; for guild commands, verify `DISCORD_GUILD_ID` is set
+| Limit | Value |
+|---|---|
+| File types | `.png` `.gif` `.jpg` `.jpeg` `.webp` |
+| Max file size | 256 KB per emoji |
+| Max dimensions | 128 × 128 pixels |
+| Name length | 2–32 characters |
+| Name characters | `a–z`, `0–9`, underscore only |
+| Emoji slots | 50 static / 50 animated (Level 0) |
+| ZIP size | 100 MB default (configurable) |
 
-**ZIP rejected as too large**
-→ Increase `MAX_ZIP_SIZE_MB` in `.env`
+Server boost increases slots (Level 1: 100, Level 2: 150, Level 3: 250). When a server is near capacity, Emoji Wizard uploads what fits and skips the rest.
 
-**Bot offline / not responding**
-→ Check `logs/error-YYYY-MM-DD.log` for startup errors
+---
 
-**Upload stuck**
-→ Click **🚫 Cancel** in the dashboard; the session will be cleaned up automatically
+## Production Safety
+
+- All uploads require the **Manage Expressions** permission.
+- ZIP validation, extraction, and per-file checks run before any emoji is created.
+- ZIP-slip paths and non-image files are rejected during extraction.
+- Uploads are capped to available server slots; overflow is skipped, never force-written.
+- Logs and temp files live outside the repo (see `.gitignore`); `.env` is never committed.
+- The bot uses Discord's `Retry-After` header to back off on rate limits.
+
+Important files to keep private:
+
+```text
+.env
+logs/
+tmp/
+```
+
+---
+
+## Operations Checklist
+
+- [ ] `DISCORD_TOKEN` and `DISCORD_CLIENT_ID` are set in `.env`.
+- [ ] The bot has **Manage Expressions** in the target server.
+- [ ] Slash commands are deployed (`pnpm run deploy` or `deploy:global`).
+- [ ] `MAX_ZIP_SIZE_MB` matches your expected archive sizes.
+- [ ] `.env` is present in `.gitignore`.
+- [ ] `logs/` and `tmp/` are ignored by git.
+- [ ] No tokens are present in README, logs, screenshots, or commits.
+
+---
+
+## Development
+
+### Start
+
+```bash
+pnpm dev        # tsx watch
+```
+
+### Typecheck
+
+```bash
+pnpm run typecheck
+```
+
+### Register commands manually
+
+```bash
+pnpm run deploy             # guild-scoped
+pnpm run deploy:global      # global
+```
+
+---
+
+## Disclaimer
+
+This project is for legitimate server administration and emoji management. You are responsible for how you run, host, and secure this software, and for complying with Discord's Terms of Service and the permissions you grant the bot.
+
+---
+
+<div align="center">
+
+**Emoji Wizard: one ZIP in, a full emoji shelf out.**
+
+</div>
