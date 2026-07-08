@@ -109,17 +109,14 @@ export function buildDashboard(
   );
 
   // Bot health metrics
-  container.addSectionComponents(
-    new SectionBuilder()
-      .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-          `### ${ICONS.STATS} Bot Metrics\n` +
-          `${latencyIcon(latencyMs)} **Latency**   ${latencyMs}ms\n` +
-          `${ICONS.MEMORY} **Memory**    ${memUsage}\n` +
-          `${ICONS.ROBOT} **Node.js**   ${nodeVer}\n` +
-          `${ICONS.LINK} **djs API**    v${djsVer}`,
-        ),
-      ),
+  container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      `### ${ICONS.STATS} Bot Metrics\n` +
+      `${latencyIcon(latencyMs)} **Latency**   ${latencyMs}ms\n` +
+      `${ICONS.MEMORY} **Memory**    ${memUsage}\n` +
+      `${ICONS.ROBOT} **Node.js**   ${nodeVer}\n` +
+      `${ICONS.LINK} **djs API**    v${djsVer}`,
+    ),
   );
 
   // Session info (if active)

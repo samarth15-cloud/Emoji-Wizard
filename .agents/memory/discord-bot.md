@@ -22,6 +22,8 @@ description: Architecture decisions, gotchas, and non-obvious rules for the Disc
 
 **RESTJSONErrorCodes.InvalidFormBody** does not exist in the discord.js v14 enum — use the numeric code `50035` directly.
 
+**SectionBuilder requires an accessory**: Components V2 `SectionBuilder` MUST have `.setThumbnailAccessory()` or `.setButtonAccessory()` — omitting it throws a shapeshift `UnionValidator` error at `toJSON()` time (surfaces as "Received one or more errors" with no clear field name). If a section doesn't need an accessory/thumbnail, use plain `container.addTextDisplayComponents(...)` instead of wrapping in `SectionBuilder`.
+
 ## Startup requirements
 1. Copy `.env.example` → `.env` and fill in `DISCORD_TOKEN` + `DISCORD_CLIENT_ID`
 2. `pnpm --filter @workspace/discord-bot run deploy` (needs `DISCORD_GUILD_ID` for guild-scope)
