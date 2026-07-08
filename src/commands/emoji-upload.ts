@@ -151,8 +151,11 @@ async function execute(interaction: ChatInputCommandInteraction): Promise<void> 
       onEdit: async (components) => {
         try {
           await interaction.editReply({ components });
-        } catch {
-          // Token expired
+        } catch (err) {
+          logger.warn(`Failed to edit progress reply`, {
+            sessionId: session!.id,
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       },
     });

@@ -219,9 +219,20 @@ handlers.set(CUSTOM_IDS.UPLOAD_START, async (interaction) => {
 
   try {
     const collected = await textChannel.awaitMessages({
-      filter: (msg: import('discord.js').Message) =>
-        msg.author.id === interaction.user.id &&
-        msg.attachments.some((a: import('discord.js').Attachment) => a.name?.toLowerCase().endsWith('.zip')),
+      filter: (msg: import('discord.js').Message) => {
+        if (msg.author.id !== interaction.user.id) return false;
+        const hit = msg.attachments.some((a: import('discord.js').Attachment) =>
+          a.name?.toLowerCase().endsWith('.zip') ||
+          a.contentType === 'application/zip' ||
+          a.contentType === 'application/x-zip-compressed',
+        );
+        logger.debug(`Collector saw user message`, {
+          sessionId: session.id,
+          hasAttachments: msg.attachments.size,
+          matchedZip: hit,
+        });
+        return hit;
+      },
       max:    1,
       time:   UPLOAD_COLLECT_TIMEOUT_MS,
       errors: ['time'],
@@ -255,8 +266,11 @@ handlers.set(CUSTOM_IDS.UPLOAD_START, async (interaction) => {
       onEdit: async (components) => {
         try {
           await interaction.editReply({ components });
-        } catch {
-          // Interaction token may have expired
+        } catch (err) {
+          logger.warn(`Failed to edit progress reply`, {
+            sessionId: session.id,
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       },
     });

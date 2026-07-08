@@ -110,21 +110,18 @@ export async function validateZip(
     const stream = createReadStream(zipPath);
     const zip = stream.pipe(unzipper.Parse({ forceStream: true }));
 
-    entries = await new Promise((resolve, reject) => {
-      const collected: typeof entries = [];
-      zip.on('entry', entry => {
-        collected.push({
-          path:             entry.path as string,
-          type:             entry.type as string,
-          compressedSize:   Number((entry.extra as { compressedSize?: number }).compressedSize ?? 0),
-          uncompressedSize: Number(entry.vars?.uncompressedSize ?? 0),
-        });
-        entry.autodrain(); // Don't hold buffers in memory
+    const collected: typeof entries = [];
+    for await (const entry of zip) {
+      const typedEntry = entry as unzipper.Entry;
+      collected.push({
+        path:             typedEntry.path as string,
+        type:             typedEntry.type as string,
+        compressedSize:   Number((typedEntry.extra as { compressedSize?: number }).compressedSize ?? 0),
+        uncompressedSize: Number((typedEntry.vars as { uncompressedSize?: number } | undefined)?.uncompressedSize ?? 0),
       });
-      zip.on('finish', () => resolve(collected));
-      zip.on('error', reject);
-      stream.on('error', reject);
-    });
+      typedEntry.autodrain(); // Don't hold buffers in memory
+    }
+    entries = collected;
   } catch (err) {
     result.errors.push(
       `Cannot read ZIP: ${err instanceof Error ? err.message : 'unknown error'}. ` +

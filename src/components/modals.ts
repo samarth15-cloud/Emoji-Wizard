@@ -51,7 +51,7 @@ export function buildSettingsModal(current: UploadSettings): ModalBuilder {
 
   const flagsInput = new TextInputBuilder()
     .setCustomId('setting_flags')
-    .setLabel('Flags (auto_rename, skip_dup, animated_first, dry_run)')
+    .setLabel('Flags (space-separated)')
     .setStyle(TextInputStyle.Short)
     .setValue(buildFlagsString(current))
     .setMinLength(0)
